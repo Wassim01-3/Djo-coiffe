@@ -29,6 +29,7 @@ import {
 } from '@services/loyalty.service'
 import { getActiveServices, getActiveBarbers } from '@services/catalog.service'
 import { getUserById } from '@services/auth.service'
+import { getActiveSubscription } from '@services/subscription.service'
 import type {
   LoyaltyReward,
   Reservation,
@@ -44,6 +45,7 @@ type ScanStep = 'idle' | 'preview' | 'confirming' | 'done' | 'error'
 interface PreviewData {
   token: string
   isLoyalty: boolean
+  isSubscriptionCovered?: boolean
   reservation?: Reservation
   customer?: User | null
   barber?: Barber | null
@@ -192,7 +194,19 @@ const AdminScannerPage: React.FC = () => {
           /* non-fatal */
         }
 
-        setPreview({ token: decodedText, isLoyalty: false, reservation, customer, barber, service })
+        // Check if the reserved service is covered by an active subscription
+        let isSubscriptionCovered = false
+        try {
+          const activeSub = await getActiveSubscription(reservation.customerId)
+          if (activeSub) {
+            const remaining = activeSub.remainingServices?.[reservation.serviceId] ?? 0
+            isSubscriptionCovered = remaining > 0
+          }
+        } catch {
+          /* non-fatal */
+        }
+
+        setPreview({ token: decodedText, isLoyalty: false, isSubscriptionCovered, reservation, customer, barber, service })
         setStep('preview')
       }
     } catch (err: unknown) {
@@ -378,7 +392,7 @@ const AdminScannerPage: React.FC = () => {
                       />
                       <div className="border-t border-white/10" />
                       {(() => {
-                        const payment = getPaymentLabel(preview.reservation, false)
+                        const payment = getPaymentLabel(preview.reservation, preview.isSubscriptionCovered ?? false)
                         return (
                           <Row
                             icon={payment.icon}
