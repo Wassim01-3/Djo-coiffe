@@ -133,7 +133,7 @@ const AdminScannerPage: React.FC = () => {
     try {
       await html5QrCode.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
+        { fps: 10, qrbox: 250 },
         onScanSuccess,
         () => {},
       )
@@ -248,7 +248,7 @@ const AdminScannerPage: React.FC = () => {
       try {
         await scannerRef.current.start(
           { facingMode: 'environment' },
-          { fps: 10, qrbox: { width: 280, height: 220 }, aspectRatio: 1.7778 },
+          { fps: 10, qrbox: 250 },
           onScanSuccess,
           () => {},
         )
@@ -303,24 +303,7 @@ const AdminScannerPage: React.FC = () => {
                 <div
                   id="qr-reader"
                   className="overflow-hidden rounded-2xl w-full bg-gray-900"
-                  style={{ aspectRatio: '1/1' }}
                 />
-                {/* Corner bracket overlay */}
-                <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="relative" style={{ width: '70%', aspectRatio: '1/1' }}>
-                    <span className="absolute top-0 left-0 h-7 w-7 border-t-4 border-l-4 border-accent rounded-tl-md" />
-                    <span className="absolute top-0 right-0 h-7 w-7 border-t-4 border-r-4 border-accent rounded-tr-md" />
-                    <span className="absolute bottom-0 left-0 h-7 w-7 border-b-4 border-l-4 border-accent rounded-bl-md" />
-                    <span className="absolute bottom-0 right-0 h-7 w-7 border-b-4 border-r-4 border-accent rounded-br-md" />
-                    {isScanning && (
-                      <motion.div
-                        className="absolute left-1 right-1 h-0.5 bg-accent shadow-[0_0_12px_rgba(197,157,95,0.9)]"
-                        animate={{ top: ['5%', '90%'] }}
-                        transition={{ duration: 2, ease: 'easeInOut', repeat: Infinity, repeatType: 'reverse' }}
-                      />
-                    )}
-                  </div>
-                </div>
               </div>
               <div className="text-center flex flex-col items-center gap-2">
                 <QrCode className="h-6 w-6 text-accent" />
