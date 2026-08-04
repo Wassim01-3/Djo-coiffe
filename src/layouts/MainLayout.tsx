@@ -51,7 +51,16 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </header>
 
       {/* Main Content Area (padding bottom for BottomNav) */}
-      <main className="flex-1 pb-16 pt-[calc(3.5rem+env(safe-area-inset-top))]">{children}</main>
+      <main className="flex-1 pb-20 pt-[calc(3.5rem+env(safe-area-inset-top))] flex flex-col">
+        <div className="flex-1">
+          {children}
+        </div>
+        <footer className="mt-8 py-6 text-center">
+          <p className="text-xs text-gray-400 font-medium tracking-wide">
+            Dévéloppé par <span className="text-accent font-bold">Wassim Mars</span>
+          </p>
+        </footer>
+      </main>
 
       {/* Persistent Bottom Navigation */}
       <BottomNav />
