@@ -157,7 +157,6 @@ const AdminScannerPage: React.FC = () => {
   const onScanSuccess = async (decodedText: string) => {
     if (scannerRef.current?.isScanning) {
       await scannerRef.current.stop()
-      setIsScanning(false)
     }
 
     const isLoyalty = decodedText.startsWith('REWARD:')
