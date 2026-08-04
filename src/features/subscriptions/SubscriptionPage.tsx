@@ -1,14 +1,15 @@
 import React, { useEffect, useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ROUTES } from '@constants/routes'
-import { Crown, AlertTriangle } from 'lucide-react'
+import { Crown, AlertTriangle, Scissors } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { EmptyState } from '@components/ui'
 import { useAuthContext } from '@contexts/AuthContext'
 import { getActiveSubscription } from '@services/subscription.service'
+import { getActiveServices } from '@services/catalog.service'
 import { doc, getDoc } from 'firebase/firestore'
 import { db } from '@appFirebase/config'
-import type { Subscription, SubscriptionPlan } from '@appTypes/models'
+import type { Subscription, SubscriptionPlan, Service } from '@appTypes/models'
 
 const SubscriptionSkeleton = () => (
   <div className="px-4">
@@ -43,6 +44,7 @@ const SubscriptionPage: React.FC = () => {
   const { customer } = useAuthContext()
   const [activeSub, setActiveSub] = useState<Subscription | null>(null)
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null)
+  const [services, setServices] = useState<Service[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -52,11 +54,14 @@ const SubscriptionPage: React.FC = () => {
     setError(null)
 
     try {
-      const sub = await getActiveSubscription(customer.id)
+      const [sub, servicesData] = await Promise.all([
+        getActiveSubscription(customer.id),
+        getActiveServices(),
+      ])
       setActiveSub(sub)
+      setServices(servicesData)
 
       if (sub) {
-        // Fetch plan details to get the name and total haircuts
         const planRef = doc(db, 'subscriptionPlans', sub.planId)
         const planSnap = await getDoc(planRef)
         if (planSnap.exists()) {
@@ -65,7 +70,7 @@ const SubscriptionPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to load subscription:', err)
-      setError('Erreur lors du chargement de l\'abonnement.')
+      setError("Erreur lors du chargement de l'abonnement.")
     } finally {
       setIsLoading(false)
     }
@@ -86,9 +91,23 @@ const SubscriptionPage: React.FC = () => {
   }
 
   // Calculate percentage used for the progress bar based on time
-  const timeProgress = plan && activeSub
-    ? Math.max(0, 100 - (daysRemaining / plan.validityDays) * 100)
-    : 0
+  const timeProgress =
+    plan && activeSub
+      ? Math.max(0, 100 - (daysRemaining / plan.validityDays) * 100)
+      : 0
+
+  // Build service remaining list
+  const serviceEntries =
+    activeSub && plan
+      ? (plan.servicesIncluded ?? []).map((entry) => ({
+          name:
+            services.find((s) => s.id === entry.serviceId)?.name ??
+            entry.serviceId,
+          total: entry.count,
+          remaining:
+            activeSub.remainingServices?.[entry.serviceId] ?? 0,
+        }))
+      : []
 
   return (
     <div className="flex min-h-screen flex-col bg-background pt-4 pb-28">
@@ -145,11 +164,38 @@ const SubscriptionPage: React.FC = () => {
               </div>
               
               <div className="space-y-6">
+                {/* Per-service remaining */}
                 <div>
-                  <p className="text-xs text-gray-400 font-medium">Coupes restantes</p>
-                  <div className="flex items-baseline gap-2">
-                    <p className="font-heading text-4xl font-bold">{activeSub.remainingHaircuts}</p>
-                    <p className="text-sm text-gray-400">/ {plan.haircutsIncluded}</p>
+                  <p className="text-xs text-gray-400 font-medium mb-3">Services restants</p>
+                  <div className="space-y-3">
+                    {serviceEntries.map((entry) => {
+                      const usedPct =
+                        entry.total > 0
+                          ? ((entry.total - entry.remaining) / entry.total) * 100
+                          : 100
+                      return (
+                        <div key={entry.name}>
+                          <div className="flex items-center justify-between mb-1">
+                            <div className="flex items-center gap-2">
+                              <Scissors className="h-3.5 w-3.5 text-accent" />
+                              <span className="text-sm text-white/80">{entry.name}</span>
+                            </div>
+                            <span className="text-sm font-bold">
+                              {entry.remaining}
+                              <span className="text-xs text-gray-400 font-normal"> / {entry.total}</span>
+                            </span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-white/10">
+                            <motion.div
+                              initial={{ width: 0 }}
+                              animate={{ width: `${Math.min(100, usedPct)}%` }}
+                              transition={{ duration: 0.8, delay: 0.1 }}
+                              className="h-full bg-gradient-to-r from-accent to-[#d4af37] rounded-full"
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
                 
