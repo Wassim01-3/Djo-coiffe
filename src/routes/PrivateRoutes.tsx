@@ -12,8 +12,15 @@ const PrivateRoute: React.FC = () => {
   const { isCustomerAuthenticated, isLoading } = useAuthContext()
   const location = useLocation()
 
-  // While Firebase is initializing, show nothing (prevents flash)
-  if (isLoading) return null
+  // Show a spinner while Firebase Auth initializes.
+  // Returning null causes a blank white page on iOS Safari (slow Firebase init).
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background">
+        <div className="h-8 w-8 animate-spin rounded-full border-2 border-accent border-t-transparent" />
+      </div>
+    )
+  }
 
   if (!isCustomerAuthenticated) {
     return <Navigate to={ROUTES.LOGIN} state={{ from: location }} replace />
