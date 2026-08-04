@@ -24,6 +24,9 @@ const LoyaltyPage = lazy(() => import('@features/loyalty/LoyaltyPage'))
 const SubscriptionPage = lazy(
   () => import('@features/subscriptions/SubscriptionPage'),
 )
+const SubscriptionsCatalogPage = lazy(
+  () => import('@features/subscriptions/SubscriptionsCatalogPage'),
+)
 const NotificationsPage = lazy(
   () => import('@features/notifications/NotificationsPage'),
 )
@@ -166,6 +169,14 @@ export const AppRoutes: React.FC = () => {
             element={
               <MainLayout>
                 <SubscriptionPage />
+              </MainLayout>
+            }
+          />
+          <Route
+            path={ROUTES.SUBSCRIPTIONS_CATALOG}
+            element={
+              <MainLayout>
+                <SubscriptionsCatalogPage />
               </MainLayout>
             }
           />
