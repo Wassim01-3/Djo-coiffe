@@ -211,8 +211,15 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 overflow-auto">
-          {children}
+        <main className="flex-1 overflow-auto flex flex-col">
+          <div className="flex-1">
+            {children}
+          </div>
+          <footer className="mt-8 py-6 text-center">
+            <p className="text-xs text-gray-400 font-medium tracking-wide">
+              Dévéloppé par <span className="text-accent font-bold">Wassim Mars</span>
+            </p>
+          </footer>
         </main>
       </div>
     </div>
