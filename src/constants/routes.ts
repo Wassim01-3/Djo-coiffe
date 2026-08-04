@@ -6,6 +6,7 @@ export const ROUTES = {
   PRODUCTS: '/products',
   LOYALTY: '/loyalty',
   SUBSCRIPTIONS: '/subscriptions',
+  SUBSCRIPTIONS_CATALOG: '/subscriptions/catalog',
   NOTIFICATIONS: '/notifications',
   MY_RESERVATIONS: '/my-reservations',
   PROFILE: '/profile',
