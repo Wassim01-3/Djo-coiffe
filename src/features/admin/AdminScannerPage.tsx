@@ -8,7 +8,7 @@ import {
   AlertTriangle,
   RefreshCcw,
   Gift,
-  User,
+  User as UserIcon,
   Scissors,
   Calendar,
   Clock,
@@ -357,7 +357,7 @@ const AdminScannerPage: React.FC = () => {
                 <div className="px-5 py-4 space-y-3.5">
                   {/* Customer */}
                   <Row
-                    icon={<User className="h-4 w-4 text-white/70" />}
+                    icon={<UserIcon className="h-4 w-4 text-white/70" />}
                     label="Client"
                     value={
                       preview.customer?.fullName ??
@@ -500,7 +500,7 @@ const AdminScannerPage: React.FC = () => {
                 <div className="px-5 py-4 space-y-3.5">
                   {done.customer && (
                     <Row
-                      icon={<User className="h-4 w-4 text-white/70" />}
+                      icon={<UserIcon className="h-4 w-4 text-white/70" />}
                       label="Client"
                       value={done.customer.fullName}
                     />
