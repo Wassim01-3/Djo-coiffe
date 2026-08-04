@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Calendar, Clock, Scissors, X, Plus } from 'lucide-react'
+import { Calendar, Clock, Scissors, X, Plus, QrCode } from 'lucide-react'
 import { EmptyState } from '@components/ui'
 import { GhostButton } from '@components/buttons/GhostButton'
 import { DangerButton } from '@components/buttons/DangerButton'
@@ -190,10 +190,11 @@ const MyReservationsPage: React.FC = () => {
                 {activeTab === 'upcoming' && (
                   <div className="mt-4 flex gap-2">
                     <GhostButton 
-                      className="h-10 flex-1 gap-1.5 text-xs border border-primary text-primary"
+                      className="h-10 flex-1 flex items-center justify-center border border-primary text-primary"
                       onClick={() => navigate(`/reservations/${res.id}/qr`)}
+                      title="Voir le QR"
                     >
-                      Voir le QR
+                      <QrCode className="h-5 w-5" />
                     </GhostButton>
                     <DangerButton
                       isLoading={cancellingId === res.id}
