@@ -56,35 +56,38 @@ const ServiceRow: React.FC<{
   )
 
   return (
-    <div className="flex items-center gap-2">
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-3 space-y-2">
       <select
         value={entry.serviceId}
         onChange={(e) => onChange({ ...entry, serviceId: e.target.value })}
-        className="flex-1 rounded-xl border border-gray-300 p-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        className="w-full rounded-xl border border-gray-300 bg-white p-2.5 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         required
       >
-        <option value="">-- Service --</option>
+        <option value="">-- Choisir un service --</option>
         {available.map((s) => (
           <option key={s.id} value={s.id}>
             {s.name}
           </option>
         ))}
       </select>
-      <input
-        type="number"
-        min="1"
-        value={entry.count}
-        onChange={(e) => onChange({ ...entry, count: Number(e.target.value) })}
-        className="w-20 rounded-xl border border-gray-300 p-2.5 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-        required
-      />
-      <button
-        type="button"
-        onClick={onRemove}
-        className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-danger/20 text-danger hover:bg-danger/10"
-      >
-        <X className="h-4 w-4" />
-      </button>
+      <div className="flex items-center gap-2">
+        <label className="text-xs text-gray-500 flex-1">Nombre d'utilisations</label>
+        <input
+          type="number"
+          min="1"
+          value={entry.count}
+          onChange={(e) => onChange({ ...entry, count: Number(e.target.value) })}
+          className="w-20 rounded-xl border border-gray-300 p-2 text-center text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+          required
+        />
+        <button
+          type="button"
+          onClick={onRemove}
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-xl border border-danger/20 text-danger hover:bg-danger/10"
+        >
+          <X className="h-4 w-4" />
+        </button>
+      </div>
     </div>
   )
 }
