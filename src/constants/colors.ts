@@ -1,0 +1,10 @@
+export const COLORS = {
+  BACKGROUND: '#F8F8F8',
+  PRIMARY: '#111827',
+  ACCENT: '#C59D5F',
+  SUCCESS: '#22C55E',
+  DANGER: '#EF4444',
+  RESERVED: '#3B82F6',
+  UNAVAILABLE: '#6B7280',
+  CARD: '#FFFFFF',
+} as const

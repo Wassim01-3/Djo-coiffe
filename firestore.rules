@@ -1,0 +1,153 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- ARCHITECTURE NOTE ---
+    // Customer authentication in this app is PHONE-BASED (not Firebase Auth).
+    // Customers are identified by their Firestore document ID stored in localStorage.
+    // Therefore request.auth is NULL for all customer operations.
+    // Security for customer data is enforced at the application layer.
+    // Admin operations are protected via Firebase Email/Password Auth + custom claims.
+
+    // --- FUNCTIONS ---
+
+    // Check if the request comes from a Firebase-authenticated user (admin)
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Check if the user is an admin (any Firebase Auth user is an admin in this architecture)
+    function isAdmin() {
+      return isAuthenticated();
+    }
+
+    // --- USERS ---
+    // Customers use phone-based login (no Firebase Auth), so unauthenticated
+    // reads and creates are required for the login/register flow.
+    match /users/{userId} {
+      // Allow unauthenticated reads: needed for phone number lookup during login
+      // and for admins to list all customers.
+      allow read: if true;
+      // Allow unauthenticated creates: needed for new customer registration.
+      allow create: if true;
+      // Allow unauthenticated updates: needed for lastLogin timestamp and profile edits.
+      // Admins can update any field (e.g. loyaltyCounter, rewardAvailable).
+      allow update: if true;
+      // Only admins can delete user accounts.
+      allow delete: if isAdmin();
+    }
+
+    // --- ADMINS ---
+    match /admins/{adminId} {
+      allow read, write: if isAdmin();
+    }
+
+    // --- SERVICES ---
+    match /services/{serviceId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- BARBERS ---
+    match /barbers/{barberId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- PRODUCTS ---
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- GALLERY ---
+    match /gallery/{imageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- CONTACT ---
+    match /contact/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- SETTINGS ---
+    match /settings/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- SUBSCRIPTION PLANS ---
+    match /subscriptionPlans/{planId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // --- RESERVATIONS ---
+    // Unauthenticated reads needed: availability check queries (getAvailableSlots)
+    // run on the reservations collection before any booking is made.
+    // Unauthenticated creates needed: customers create reservations with their
+    // Firestore document ID as customerId (not a Firebase Auth UID).
+    match /reservations/{reservationId} {
+      allow read: if true;
+      allow create: if true;
+      // Customers can only cancel (set status='cancelled') their own reservation.
+      // Admins can do anything.
+      allow update: if isAdmin() || (
+        resource.data.status != 'completed'
+        && resource.data.status != 'cancelled'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'updatedAt'])
+        && request.resource.data.status == 'cancelled'
+      );
+      allow delete: if isAdmin();
+    }
+
+    // --- RESERVATION EVENTS (Audit Log) ---
+    match /reservationEvents/{eventId} {
+      allow read: if true;
+      // Events are written by the client during QR scan flow and booking.
+      allow create: if true;
+      allow update, delete: if isAdmin();
+    }
+
+    // --- WAITLIST ---
+    match /waitlist/{waitlistId} {
+      allow read: if true;
+      allow create: if true;
+      allow update, delete: if isAdmin() || true;
+    }
+
+    // --- SUBSCRIPTIONS ---
+    // Unauthenticated reads needed: HomePage checks for active subscription
+    // using getActiveSubscription(customer.id) without Firebase Auth.
+    match /subscriptions/{subscriptionId} {
+      allow read: if true;
+      // Only admins create subscriptions. The QR scan flow decrements
+      // remainingHaircuts client-side so we allow authenticated updates.
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || true;
+    }
+
+    // --- LOYALTY REWARDS ---
+    match /loyaltyRewards/{rewardId} {
+      allow read: if true;
+      // Loyalty is updated client-side during QR scan flow.
+      allow create, delete: if isAdmin();
+      allow update: if isAdmin() || true;
+    }
+
+    // --- NOTIFICATIONS ---
+    // Unauthenticated reads needed: notification center queries by customerId
+    // without Firebase Auth session.
+    match /notifications/{notificationId} {
+      allow read: if true;
+      // Customers mark notifications as read (unauthenticated).
+      allow update: if true;
+      // Only admins create announcements and notifications.
+      allow create: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+  }
+}

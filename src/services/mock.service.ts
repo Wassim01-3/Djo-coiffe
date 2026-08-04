@@ -1,0 +1,101 @@
+import type { Barber, Service, AppSettings } from '@appTypes/models'
+import type { Timestamp } from 'firebase/firestore'
+
+export const MOCK_BARBERS: Barber[] = [
+  {
+    id: 'b1',
+    name: 'Ahmed Ben Ali',
+    phone: '+216 20 123 456',
+    seatNumber: 1,
+    enabled: true,
+    displayOrder: 1,
+    createdAt: null as unknown as Timestamp,
+    updatedAt: null as unknown as Timestamp,
+  },
+  {
+    id: 'b2',
+    name: 'Sami',
+    phone: '+216 20 654 321',
+    seatNumber: 2,
+    enabled: true,
+    displayOrder: 2,
+    createdAt: null as unknown as Timestamp,
+    updatedAt: null as unknown as Timestamp,
+  },
+]
+
+export const MOCK_SERVICES: Service[] = [
+  {
+    id: 's1',
+    name: 'Coupe Classique',
+    price: 15,
+    durationMinutes: 30,
+    enabled: true,
+    description: 'Coupe homme classique avec finitions.',
+    displayOrder: 1,
+    icon: 'scissors',
+  },
+  {
+    id: 's2',
+    name: 'Coupe & Barbe',
+    price: 25,
+    durationMinutes: 60,
+    enabled: true,
+    description: 'Coupe complète avec traçage de la barbe.',
+    displayOrder: 2,
+    icon: 'scissors',
+  },
+  {
+    id: 's3',
+    name: 'Traçage Barbe',
+    price: 10,
+    durationMinutes: 15, // Will effectively block 30 mins because slots are 30 min increments but fits in 1.
+    enabled: true,
+    description: 'Traçage de la barbe à la lame.',
+    displayOrder: 3,
+    icon: 'scissors',
+  },
+  {
+    id: 's4',
+    name: 'Protein',
+    price: 80,
+    durationMinutes: 120,
+    enabled: true,
+    description: 'Soin protéine pour lisser les cheveux.',
+    displayOrder: 4,
+    icon: 'spray',
+  },
+]
+
+export const MOCK_APP_SETTINGS: AppSettings = {
+  id: 'app-settings',
+  shopName: 'Djo Coiffe',
+  logoUrl: '',
+  phone: '+216 20 000 000',
+  whatsapp: '',
+  facebook: '',
+  instagram: '',
+  address: 'Tunis',
+  googleMapsUrl: '',
+  latitude: 0,
+  longitude: 0,
+  openingHours: {
+    monday: { open: '08:00', close: '19:00', closed: false },
+    tuesday: { open: '08:00', close: '19:00', closed: false },
+    wednesday: { open: '08:00', close: '19:00', closed: false },
+    thursday: { open: '08:00', close: '19:00', closed: false },
+    friday: { open: '08:00', close: '19:00', closed: false },
+    saturday: { open: '08:00', close: '19:00', closed: false },
+    sunday: { open: '00:00', close: '00:00', closed: true },
+  },
+  activeSeats: 4,
+  reservationEnabled: true,
+  galleryEnabled: true,
+  productsEnabled: true,
+  loyaltyEnabled: true,
+  subscriptionEnabled: true,
+  maintenanceMode: false,
+  iosAppMessageEnabled: false,
+  androidApkUrl: '',
+  version: '1.0',
+}
