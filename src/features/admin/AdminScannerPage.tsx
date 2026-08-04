@@ -133,7 +133,7 @@ const AdminScannerPage: React.FC = () => {
     try {
       await html5QrCode.start(
         { facingMode: 'environment' },
-        { fps: 10, qrbox: { width: 280, height: 220 }, aspectRatio: 1.7778 },
+        { fps: 10, qrbox: { width: 250, height: 250 }, aspectRatio: 1 },
         onScanSuccess,
         () => {},
       )
@@ -168,7 +168,13 @@ const AdminScannerPage: React.FC = () => {
       if (isLoyalty) {
         // For loyalty QR — validate (read-only check) and show preview
         const reward = await validateLoyaltyRewardByToken(decodedText)
-        setPreview({ token: decodedText, isLoyalty: true, loyaltyReward: reward })
+        let customer: User | null = null
+        try {
+          customer = await getUserById(reward.customerId)
+        } catch {
+          // ignore
+        }
+        setPreview({ token: decodedText, isLoyalty: true, loyaltyReward: reward, customer })
         setStep('preview')
       } else {
         // For reservation QR — fetch details without completing
@@ -297,11 +303,11 @@ const AdminScannerPage: React.FC = () => {
                 <div
                   id="qr-reader"
                   className="overflow-hidden rounded-2xl w-full bg-gray-900"
-                  style={{ aspectRatio: '16/9' }}
+                  style={{ aspectRatio: '1/1' }}
                 />
                 {/* Corner bracket overlay */}
                 <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-                  <div className="relative" style={{ width: '70%', aspectRatio: '280/220' }}>
+                  <div className="relative" style={{ width: '70%', aspectRatio: '1/1' }}>
                     <span className="absolute top-0 left-0 h-7 w-7 border-t-4 border-l-4 border-accent rounded-tl-md" />
                     <span className="absolute top-0 right-0 h-7 w-7 border-t-4 border-r-4 border-accent rounded-tr-md" />
                     <span className="absolute bottom-0 left-0 h-7 w-7 border-b-4 border-l-4 border-accent rounded-bl-md" />
