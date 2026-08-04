@@ -65,7 +65,7 @@ export const findUserByPhone = async (phone: string): Promise<User | null> => {
   const q = query(usersRef, where('phoneNumber', '==', phone))
   const snapshot = await getDocs(q)
   if (snapshot.empty) return null
-  return snapshot.docs[0].data() as User
+  return { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as User
 }
 
 /**
