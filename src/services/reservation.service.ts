@@ -308,6 +308,36 @@ export const cancelReservation = async (
 }
 
 /**
+ * Fetch a reservation by its QR token without modifying it.
+ * Used by the admin scanner to preview reservation details before confirming.
+ */
+export const fetchReservationByToken = async (
+  qrToken: string,
+): Promise<Reservation> => {
+  const reservationsRef = collection(db, 'reservations')
+  const q = query(reservationsRef, where('qrToken', '==', qrToken))
+  const querySnapshot = await getDocs(q)
+
+  if (querySnapshot.empty) {
+    throw new Error('QR Code invalide ou introuvable.')
+  }
+
+  const reservation = querySnapshot.docs[0].data() as Reservation
+
+  if (reservation.status === 'completed') {
+    throw new Error('Ce QR Code a déjà été scanné (réservation terminée).')
+  }
+  if (reservation.status === 'cancelled') {
+    throw new Error('Cette réservation a été annulée.')
+  }
+  if (reservation.status === 'expired') {
+    throw new Error('Cette réservation a expiré.')
+  }
+
+  return reservation
+}
+
+/**
  * Validate QR Token and Complete Reservation
  */
 export const validateAndCompleteReservation = async (
