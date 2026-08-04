@@ -116,7 +116,6 @@ const AdminScannerPage: React.FC = () => {
   const scannerRef = useRef<Html5Qrcode | null>(null)
 
   const [step, setStep] = useState<ScanStep>('idle')
-  const [isScanning, setIsScanning] = useState(false)
   const [preview, setPreview] = useState<PreviewData | null>(null)
   const [done, setDone] = useState<DoneData | null>(null)
   const [errorMsg, setErrorMsg] = useState('')
@@ -137,7 +136,6 @@ const AdminScannerPage: React.FC = () => {
         onScanSuccess,
         () => {},
       )
-      setIsScanning(true)
     } catch (err) {
       console.error('Scanner init failed', err)
       setErrorMsg('Impossible de démarrer la caméra. Vérifiez les permissions.')
@@ -252,7 +250,6 @@ const AdminScannerPage: React.FC = () => {
           onScanSuccess,
           () => {},
         )
-        setIsScanning(true)
       } catch (err) {
         console.error('Restart failed', err)
       }
