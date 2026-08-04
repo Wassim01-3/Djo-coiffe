@@ -26,7 +26,6 @@ export const getSubscriptionPlans = async (): Promise<SubscriptionPlan[]> => {
   const plansRef = collection(db, 'subscriptionPlans')
   const snapshot = await getDocs(plansRef)
   const plans = snapshot.docs.map((d) => d.data() as SubscriptionPlan)
-
   return plans.sort((a, b) => a.displayOrder - b.displayOrder)
 }
 
@@ -85,6 +84,12 @@ export const assignSubscription = async (
     })
   }
 
+  // Build remainingServices map from plan's servicesIncluded
+  const remainingServices: Record<string, number> = {}
+  for (const entry of plan.servicesIncluded ?? []) {
+    remainingServices[entry.serviceId] = (remainingServices[entry.serviceId] ?? 0) + entry.count
+  }
+
   // Create new subscription
   const id = crypto.randomUUID()
   const today = new Date()
@@ -94,6 +99,8 @@ export const assignSubscription = async (
   expDateObj.setDate(expDateObj.getDate() + plan.validityDays)
   const expirationDate = expDateObj.toISOString().split('T')[0]
 
+  const totalServices = Object.values(remainingServices).reduce((a, b) => a + b, 0)
+
   const sub: Omit<Subscription, 'createdAt' | 'updatedAt'> & {
     createdAt: FieldValue
     updatedAt: FieldValue
@@ -101,7 +108,7 @@ export const assignSubscription = async (
     id,
     customerId,
     planId: plan.id,
-    remainingHaircuts: plan.haircutsIncluded,
+    remainingServices,
     startDate,
     expirationDate,
     status: 'active',
@@ -116,7 +123,7 @@ export const assignSubscription = async (
   await createNotification(
     customerId,
     'Nouvel abonnement VIP !',
-    `Votre pass ${plan.name} est actif. Profitez de ${plan.haircutsIncluded} coupes gratuites.`,
+    `Votre pass ${plan.name} est actif. Profitez de ${totalServices} service(s) inclus.`,
     'Subscription',
     { subscriptionId: id },
     '/subscription',
@@ -142,6 +149,11 @@ export const getActiveSubscription = async (
 
   const sub = snapshot.docs[0].data() as Subscription
 
+  // Ensure remainingServices exists (backward compat for old docs)
+  if (!sub.remainingServices) {
+    sub.remainingServices = {}
+  }
+
   // Check expiration (lazy evaluation)
   const todayStr = new Date().toISOString().split('T')[0]
   if (sub.expirationDate < todayStr) {
@@ -152,8 +164,9 @@ export const getActiveSubscription = async (
     return null
   }
 
-  // Also catch edge case where remaining is 0 but status was somehow active
-  if (sub.remainingHaircuts <= 0) {
+  // Check if all services are exhausted
+  const totalRemaining = Object.values(sub.remainingServices).reduce((a, b) => a + b, 0)
+  if (totalRemaining <= 0) {
     await updateDoc(doc(db, 'subscriptions', sub.id), {
       status: 'finished' as SubscriptionStatus,
       updatedAt: serverTimestamp(),
@@ -165,35 +178,52 @@ export const getActiveSubscription = async (
 }
 
 /**
- * Decrements the remaining haircuts on a customer's active subscription.
- * Called automatically when a reservation QR is scanned and validated.
- * Returns true if a subscription was used, false otherwise.
+ * Decrements the remaining count for a specific service in the customer's active subscription.
+ * Returns true if a subscription was used, false if no active sub or service not covered.
  */
-export const decrementSubscription = async (
+export const decrementSubscriptionService = async (
   customerId: string,
+  serviceId: string,
 ): Promise<boolean> => {
   const activeSub = await getActiveSubscription(customerId)
   if (!activeSub) return false
 
-  const newRemaining = activeSub.remainingHaircuts - 1
-  const newStatus: SubscriptionStatus =
-    newRemaining <= 0 ? 'finished' : 'active'
+  const remaining = activeSub.remainingServices[serviceId] ?? 0
+  if (remaining <= 0) return false
+
+  const newServices = {
+    ...activeSub.remainingServices,
+    [serviceId]: remaining - 1,
+  }
+
+  const totalRemaining = Object.values(newServices).reduce((a, b) => a + b, 0)
+  const newStatus: SubscriptionStatus = totalRemaining <= 0 ? 'finished' : 'active'
 
   await updateDoc(doc(db, 'subscriptions', activeSub.id), {
-    remainingHaircuts: newRemaining,
+    remainingServices: newServices,
     status: newStatus,
     updatedAt: serverTimestamp(),
   })
 
-  // Optionally send a notification if it's finished
+  // Notify if subscription is now exhausted
   if (newStatus === 'finished') {
     await createNotification(
       customerId,
       'Abonnement terminé',
-      "Vous avez utilisé toutes les coupes de votre abonnement. N'hésitez pas à le renouveler au salon !",
+      "Vous avez utilisé tous les services de votre abonnement. N'hésitez pas à le renouveler au salon !",
       'Subscription',
     )
   }
 
   return true
+}
+
+/**
+ * @deprecated Use decrementSubscriptionService instead.
+ * Kept for backward compatibility.
+ */
+export const decrementSubscription = async (
+  customerId: string,
+): Promise<boolean> => {
+  return decrementSubscriptionService(customerId, '__any__')
 }
