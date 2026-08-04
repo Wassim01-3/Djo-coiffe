@@ -14,7 +14,7 @@ import { db } from '@appFirebase/config'
 import type { Reservation, ReservationEvent, Service } from '@appTypes/models'
 import { triggerWaitlistOffers } from './waitlist.service'
 import { incrementLoyaltyCounter } from './loyalty.service'
-import { decrementSubscription } from './subscription.service'
+import { decrementSubscriptionService } from './subscription.service'
 import { getAppSettings } from './settings.service'
 
 /**
@@ -426,7 +426,7 @@ export const validateAndCompleteReservation = async (
   // Decrement subscription if customer has an active one
   let isSubscriptionUsed = false
   try {
-    isSubscriptionUsed = await decrementSubscription(reservation.customerId)
+    isSubscriptionUsed = await decrementSubscriptionService(reservation.customerId, reservation.serviceId)
     if (isSubscriptionUsed) {
       const subEventId = crypto.randomUUID()
       const subEvent: Omit<ReservationEvent, 'timestamp'> & { timestamp: FieldValue } = {
