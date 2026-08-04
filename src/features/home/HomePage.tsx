@@ -168,7 +168,10 @@ const HomePage: React.FC = () => {
                     <Crown className="h-4 w-4 text-accent" /> Pass VIP Actif
                   </h3>
                   <p className="mt-1 text-xs text-white/70">
-                    Il vous reste {activeSub.remainingHaircuts} coupe{activeSub.remainingHaircuts > 1 ? 's' : ''} • {daysRemaining}j restants
+                    {(() => {
+                      const total = Object.values(activeSub.remainingServices ?? {}).reduce((a, b) => a + b, 0)
+                      return `Il vous reste ${total} service${total > 1 ? 's' : ''} • ${daysRemaining}j restants`
+                    })()}
                   </p>
                 </div>
                 <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/10 shadow-inner">
