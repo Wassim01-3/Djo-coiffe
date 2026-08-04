@@ -7,6 +7,7 @@ import {
   getActiveLoyaltyReward,
   getLoyaltyHistory,
 } from '@services/loyalty.service'
+import { getUserById } from '@services/auth.service'
 import type { LoyaltyReward } from '@appTypes/models'
 
 const LOYALTY_TARGET = 5
@@ -60,20 +61,29 @@ const LoyaltyPage: React.FC = () => {
   const [history, setHistory] = useState<LoyaltyReward[]>([])
   const [showConfetti, setShowConfetti] = useState(false)
 
-  const completedHaircuts = customer?.loyaltyCounter ?? 0
-  const totalHaircuts = customer?.completedHaircuts ?? 0
+  const [realLoyaltyCounter, setRealLoyaltyCounter] = useState(customer?.loyaltyCounter ?? 0)
+  const [realCompletedHaircuts, setRealCompletedHaircuts] = useState(customer?.completedHaircuts ?? 0)
+
+  const completedHaircuts = realLoyaltyCounter
+  const totalHaircuts = realCompletedHaircuts
   const progress = Math.min((completedHaircuts / LOYALTY_TARGET) * 100, 100)
 
   const fetchLoyaltyData = useCallback(async () => {
     if (!customer?.id) return
     setIsLoading(true)
     try {
-      const [reward, hist] = await Promise.all([
+      const [reward, hist, freshCustomer] = await Promise.all([
         getActiveLoyaltyReward(customer.id),
         getLoyaltyHistory(customer.id),
+        getUserById(customer.id),
       ])
       setActiveReward(reward)
       setHistory(hist)
+
+      if (freshCustomer) {
+        setRealLoyaltyCounter(freshCustomer.loyaltyCounter)
+        setRealCompletedHaircuts(freshCustomer.completedHaircuts)
+      }
 
       if (reward !== null) {
         setShowConfetti(true)
