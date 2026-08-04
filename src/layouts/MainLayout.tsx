@@ -21,8 +21,8 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      {/* Sticky Top Bar */}
-      <header className="sticky top-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 safe-area-top">
+      {/* Fixed Top Bar */}
+      <header className="fixed top-0 left-0 z-40 w-full bg-white/80 backdrop-blur-md border-b border-gray-100 pt-[env(safe-area-inset-top)]">
         <div className="mx-auto flex h-14 max-w-md items-center justify-between px-4">
           <Link to={ROUTES.HOME} className="flex items-center gap-2">
             {/* Logo — transparent background, no container bg */}
@@ -51,7 +51,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       </header>
 
       {/* Main Content Area (padding bottom for BottomNav) */}
-      <main className="flex-1 pb-16">{children}</main>
+      <main className="flex-1 pb-16 pt-[calc(3.5rem+env(safe-area-inset-top))]">{children}</main>
 
       {/* Persistent Bottom Navigation */}
       <BottomNav />
