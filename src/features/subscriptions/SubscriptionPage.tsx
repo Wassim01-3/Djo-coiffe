@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { ROUTES } from '@constants/routes'
 import { Crown, AlertTriangle } from 'lucide-react'
 import { motion } from 'framer-motion'
 import { EmptyState } from '@components/ui'
@@ -37,6 +39,7 @@ const SubscriptionSkeleton = () => (
 )
 
 const SubscriptionPage: React.FC = () => {
+  const navigate = useNavigate()
   const { customer } = useAuthContext()
   const [activeSub, setActiveSub] = useState<Subscription | null>(null)
   const [plan, setPlan] = useState<SubscriptionPlan | null>(null)
@@ -114,8 +117,8 @@ const SubscriptionPage: React.FC = () => {
             icon={Crown}
             title="Aucun abonnement actif"
             message="Souscrivez à un abonnement en salon pour profiter d'avantages exclusifs et de coupes illimitées."
-            actionLabel="Voir les offres au salon"
-            onAction={() => {}}
+            actionLabel="Voir les offres"
+            onAction={() => navigate(ROUTES.SUBSCRIPTIONS_CATALOG)}
           />
         </motion.div>
       ) : (
