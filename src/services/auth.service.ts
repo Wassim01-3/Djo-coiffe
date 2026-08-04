@@ -3,6 +3,7 @@ import {
   query,
   where,
   getDocs,
+  getDoc,
   addDoc,
   updateDoc,
   doc,
@@ -61,6 +62,17 @@ export async function findCustomerByPhone(phone: string): Promise<User | null> {
   if (snap.empty) return null
   const docSnap = snap.docs[0]
   return { id: docSnap.id, ...docSnap.data() } as User
+}
+
+/**
+ * Fetches a customer by their Firestore document ID.
+ * Used by the admin scanner to display customer info on scan.
+ */
+export async function getUserById(userId: string): Promise<User | null> {
+  const ref = doc(db, USERS_COLLECTION, userId)
+  const snap = await getDoc(ref)
+  if (!snap.exists()) return null
+  return { id: snap.id, ...snap.data() } as User
 }
 
 /**
