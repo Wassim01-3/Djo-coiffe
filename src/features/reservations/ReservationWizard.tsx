@@ -627,7 +627,7 @@ const ReservationWizard: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       {/* Header */}
-      <div className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 backdrop-blur">
+      <div className="sticky top-0 z-10 border-b border-gray-100 bg-white/80 backdrop-blur pt-[env(safe-area-inset-top)]">
         <div className="flex items-center gap-2 px-4 py-3">
           <button
             onClick={state.step === 1 ? () => navigate(-1) : goPrev}
