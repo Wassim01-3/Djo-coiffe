@@ -1,6 +1,8 @@
 import { getToken } from 'firebase/messaging'
 import { doc, updateDoc, arrayUnion, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { db, getMessagingInstance } from '@appFirebase/config'
+import { Capacitor } from '@capacitor/core'
+import { PushNotifications } from '@capacitor/push-notifications'
 
 const NOTIFY_URL = import.meta.env.VITE_NOTIFY_SERVER_URL
 const NOTIFY_API_KEY = import.meta.env.VITE_NOTIFY_API_KEY
@@ -10,34 +12,65 @@ const NOTIFY_API_KEY = import.meta.env.VITE_NOTIFY_API_KEY
  */
 export const requestPushPermission = async (userId: string): Promise<boolean> => {
   try {
-    // Guard: Notification API not available on standard iOS Safari (only in standalone/PWA mode iOS 16.4+)
-    if (!('Notification' in window)) {
-      console.warn('Notification API not supported on this platform.')
-      return false
-    }
+    const isNative = Capacitor.isNativePlatform()
+    let currentToken: string | null = null
 
-    const permission = await window.Notification.requestPermission()
-    if (permission !== 'granted') {
-      console.log('Permission not granted for notifications')
-      return false
-    }
+    if (isNative) {
+      // --- CAPACITOR NATIVE PUSH LOGIC (ANDROID/IOS APK) ---
+      let permStatus = await PushNotifications.checkPermissions()
+      if (permStatus.receive === 'prompt') {
+        permStatus = await PushNotifications.requestPermissions()
+      }
 
-    const messaging = await getMessagingInstance()
-    if (!messaging) {
-      console.warn('Messaging is not supported on this browser/OS.')
-      return false
-    }
+      if (permStatus.receive !== 'granted') {
+        console.log('Permission not granted for native notifications')
+        return false
+      }
 
-    const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
-    const currentToken = await getToken(messaging, { vapidKey })
+      // Register with Apple / Google to receive token
+      await PushNotifications.register()
+
+      // We wait for the registration event to get the token
+      currentToken = await new Promise<string>((resolve, reject) => {
+        PushNotifications.addListener('registration', (token) => {
+          resolve(token.value)
+        })
+        PushNotifications.addListener('registrationError', (error) => {
+          console.error('Registration error: ', error.error)
+          reject(error.error)
+        })
+      })
+    } else {
+      // --- WEB PWA PUSH LOGIC ---
+      if (!('Notification' in window)) {
+        console.warn('Notification API not supported on this platform.')
+        return false
+      }
+
+      const permission = await window.Notification.requestPermission()
+      if (permission !== 'granted') {
+        console.log('Permission not granted for notifications')
+        return false
+      }
+
+      const messaging = await getMessagingInstance()
+      if (!messaging) {
+        console.warn('Messaging is not supported on this browser/OS.')
+        return false
+      }
+
+      const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
+      currentToken = await getToken(messaging, { vapidKey })
+    }
 
     if (currentToken) {
-      console.log('FCM Token received')
+      console.log('FCM Token received (Native or Web)')
       const userRef = doc(db, 'users', userId)
       await updateDoc(userRef, {
         deviceTokens: arrayUnion(currentToken),
         notificationEnabled: true,
       })
+
       return true
     } else {
       console.warn('No registration token available.')
