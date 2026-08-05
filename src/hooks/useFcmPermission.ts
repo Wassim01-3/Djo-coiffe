@@ -32,11 +32,11 @@ export const useFcmPermission = () => {
 
     const requestPermission = async () => {
       if (!('Notification' in window)) return
-      if (Notification.permission === 'granted') return
-      if (Notification.permission === 'denied') return
+      if (window.Notification.permission === 'granted') return
+      if (window.Notification.permission === 'denied') return
 
       try {
-        const permission = await Notification.requestPermission()
+        const permission = await window.Notification.requestPermission()
         if (permission !== 'granted') return
 
         // If Firebase messaging is available, get token
