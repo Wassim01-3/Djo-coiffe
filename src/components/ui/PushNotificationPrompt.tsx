@@ -5,6 +5,7 @@ import { PrimaryButton } from '@components/buttons/PrimaryButton'
 import { GhostButton } from '@components/buttons/GhostButton'
 import { requestPushPermission } from '@services/push.service'
 import { useAuthContext } from '@contexts/AuthContext'
+import { Capacitor } from '@capacitor/core'
 
 export const PushNotificationPrompt: React.FC = () => {
   const { customer } = useAuthContext()
@@ -21,12 +22,16 @@ export const PushNotificationPrompt: React.FC = () => {
       window.matchMedia('(display-mode: standalone)').matches || 
       (window.navigator as any).standalone === true
     
+    const isNative = Capacitor.isNativePlatform()
+    
     // 2. Check if we've already prompted them
     const hasPrompted = localStorage.getItem('hasPromptedForPush')
 
-    // 3. Check native permission status — guard against Safari where Notification may not exist
-    if (!('Notification' in window)) return // API not available on this browser/OS
-    const permission = window.Notification.permission
+    // 3. Check native permission status
+    // If native, we skip checking window.Notification because Capacitor handles it natively
+    if (!isNative && !('Notification' in window)) return // API not available on this browser/OS
+    
+    const permission = isNative ? 'default' : window.Notification.permission
 
     if (isStandalone && !hasPrompted && permission === 'default') {
       // Delay prompt slightly for better UX
@@ -44,7 +49,9 @@ export const PushNotificationPrompt: React.FC = () => {
 
   const handleAccept = async () => {
     if (!customer?.id) return
-    if (!('Notification' in window)) {
+    const isNative = Capacitor.isNativePlatform()
+    
+    if (!isNative && !('Notification' in window)) {
       localStorage.setItem('hasPromptedForPush', 'true')
       setIsVisible(false)
       return
