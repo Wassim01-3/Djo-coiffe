@@ -3,6 +3,7 @@ import React from 'react'
 import { Link } from 'react-router-dom'
 import { Bell } from 'lucide-react'
 import { BottomNav } from '@components/navigation'
+import { PushNotificationPrompt } from '@components/ui'
 import { ROUTES } from '@constants/routes'
 import { useNotificationContext } from '@contexts/NotificationContext'
 import { useSettingsContext } from '@contexts/SettingsContext'
@@ -64,6 +65,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
 
       {/* Persistent Bottom Navigation */}
       <BottomNav />
+
+      {/* Conditional Push Prompt for PWA */}
+      <PushNotificationPrompt />
     </div>
   )
 }
