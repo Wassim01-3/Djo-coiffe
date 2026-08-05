@@ -11,7 +11,7 @@ const NOTIFY_API_KEY = import.meta.env.VITE_NOTIFY_API_KEY
 export const requestPushPermission = async (userId: string): Promise<boolean> => {
   try {
     // Guard: Notification API not available on standard iOS Safari (only in standalone/PWA mode iOS 16.4+)
-    if (typeof Notification === 'undefined') {
+    if (!('Notification' in window)) {
       console.warn('Notification API not supported on this platform.')
       return false
     }
