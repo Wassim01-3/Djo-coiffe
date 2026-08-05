@@ -16,6 +16,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@appFirebase/config'
 import type { Notification, NotificationType } from '@appTypes/models'
+import { sendPushToUser } from './push.service'
 
 /** Fetch latest 20 notifications for a customer (one-time) */
 export const getUserNotifications = async (customerId: string): Promise<Notification[]> => {
@@ -69,6 +70,13 @@ export const createNotification = async (
   }
 
   await setDoc(doc(db, 'notifications', notifId), notification)
+
+  // Also send a real push notification (non-blocking, best-effort)
+  if (customerId !== 'ALL') {
+    sendPushToUser(customerId, title, message, actionUrl).catch((err) =>
+      console.warn('Push notification failed (non-fatal):', err),
+    )
+  }
 }
 
 /** Create a general announcement targeting ALL users */
