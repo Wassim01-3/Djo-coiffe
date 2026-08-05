@@ -10,6 +10,12 @@ const NOTIFY_API_KEY = import.meta.env.VITE_NOTIFY_API_KEY
  */
 export const requestPushPermission = async (userId: string): Promise<boolean> => {
   try {
+    // Guard: Notification API not available on standard iOS Safari (only in standalone/PWA mode iOS 16.4+)
+    if (typeof Notification === 'undefined') {
+      console.warn('Notification API not supported on this platform.')
+      return false
+    }
+
     const permission = await Notification.requestPermission()
     if (permission !== 'granted') {
       console.log('Permission not granted for notifications')
