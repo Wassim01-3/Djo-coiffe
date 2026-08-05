@@ -11,7 +11,7 @@
  */
 import { useEffect } from 'react'
 import { useAuthContext } from '@contexts/AuthContext'
-import { saveFcmToken } from '@services/notification.service'
+import { requestPushPermission } from '@services/push.service'
 
 const VISIT_COUNT_KEY = 'djo_visit_count'
 
@@ -31,34 +31,16 @@ export const useFcmPermission = () => {
     if (count < 2) return
 
     const requestPermission = async () => {
-      if (!('Notification' in window)) return
-      if (window.Notification.permission === 'granted') return
-      if (window.Notification.permission === 'denied') return
-
       try {
-        const permission = await window.Notification.requestPermission()
-        if (permission !== 'granted') return
-
-        // If Firebase messaging is available, get token
-        // (requires vapid key in env; gracefully skip if missing)
-        const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
-        if (!vapidKey) return
-
-        // Dynamic import to keep the bundle lean when not needed
-        const { getMessaging, getToken } = await import('firebase/messaging')
-        const firebaseApp = await import('@appFirebase/config')
-        const messaging = getMessaging(firebaseApp.default)
-
-        const token = await getToken(messaging, { vapidKey })
-        if (token) {
-          await saveFcmToken(customer.id, token, customer.deviceTokens ?? [])
-        }
+        await requestPushPermission(customer.id)
       } catch (err) {
         // Silently fail — notification failure must never break the app
-        console.warn('FCM token registration failed:', err)
+        console.warn('Push permission error:', err)
       }
     }
 
+    // We don't automatically prompt on iOS/Android Web unless they click a button usually,
+    // but the PWA specs allow it. If this is annoying, PushNotificationPrompt.tsx is better.
     requestPermission()
-  }, [customer])
+  }, [customer?.id, customer?.notificationEnabled])
 }
