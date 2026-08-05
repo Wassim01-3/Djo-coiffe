@@ -1,5 +1,5 @@
 import { getToken } from 'firebase/messaging'
-import { doc, updateDoc, arrayUnion, getDoc } from 'firebase/firestore'
+import { doc, updateDoc, arrayUnion, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { db, getMessagingInstance } from '@appFirebase/config'
 
 const NOTIFY_URL = import.meta.env.VITE_NOTIFY_SERVER_URL
@@ -97,5 +97,60 @@ export const sendPushToUser = async (
     }
   } catch (err) {
     console.error('Failed to send push notification:', err)
+  }
+}
+
+/**
+ * Send a push notification to all users who have notifications enabled.
+ * This is useful for global announcements.
+ */
+export const sendPushToAllUsers = async (
+  title: string,
+  body: string,
+  actionUrl?: string,
+): Promise<void> => {
+  if (!NOTIFY_URL || !NOTIFY_API_KEY) {
+    console.warn('VITE_NOTIFY_SERVER_URL or VITE_NOTIFY_API_KEY not configured.')
+    return
+  }
+
+  try {
+    const usersRef = collection(db, 'users')
+    const q = query(usersRef, where('notificationEnabled', '==', true))
+    const snap = await getDocs(q)
+    
+    let allTokens: string[] = []
+    
+    snap.forEach((docSnap) => {
+      const data = docSnap.data()
+      if (data.deviceTokens && Array.isArray(data.deviceTokens)) {
+        allTokens.push(...data.deviceTokens)
+      }
+    })
+
+    if (allTokens.length === 0) {
+      console.log('No users with device tokens found for announcement.')
+      return
+    }
+
+    // Call the Render server
+    const response = await fetch(`${NOTIFY_URL}/notify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': NOTIFY_API_KEY,
+      },
+      body: JSON.stringify({ tokens: allTokens, title, body, actionUrl }),
+    })
+
+    if (!response.ok) {
+      const err = await response.json()
+      console.error('Notify server error (bulk):', err)
+    } else {
+      const result = await response.json()
+      console.log('Bulk push sent:', result)
+    }
+  } catch (err) {
+    console.error('Failed to send bulk push notification:', err)
   }
 }
