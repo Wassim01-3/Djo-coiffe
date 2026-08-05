@@ -25,7 +25,7 @@ export const PushNotificationPrompt: React.FC = () => {
     const hasPrompted = localStorage.getItem('hasPromptedForPush')
 
     // 3. Check native permission status — guard against Safari where Notification may not exist
-    if (typeof Notification === 'undefined') return // API not available on this browser/OS
+    if (!('Notification' in window)) return // API not available on this browser/OS
     const permission = Notification.permission
 
     if (isStandalone && !hasPrompted && permission === 'default') {
@@ -44,7 +44,7 @@ export const PushNotificationPrompt: React.FC = () => {
 
   const handleAccept = async () => {
     if (!customer?.id) return
-    if (typeof Notification === 'undefined') {
+    if (!('Notification' in window)) {
       localStorage.setItem('hasPromptedForPush', 'true')
       setIsVisible(false)
       return
