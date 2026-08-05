@@ -26,7 +26,7 @@ export const PushNotificationPrompt: React.FC = () => {
 
     // 3. Check native permission status — guard against Safari where Notification may not exist
     if (!('Notification' in window)) return // API not available on this browser/OS
-    const permission = Notification.permission
+    const permission = window.Notification.permission
 
     if (isStandalone && !hasPrompted && permission === 'default') {
       // Delay prompt slightly for better UX
