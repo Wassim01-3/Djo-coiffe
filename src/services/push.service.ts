@@ -16,7 +16,7 @@ export const requestPushPermission = async (userId: string): Promise<boolean> =>
       return false
     }
 
-    const permission = await Notification.requestPermission()
+    const permission = await window.Notification.requestPermission()
     if (permission !== 'granted') {
       console.log('Permission not granted for notifications')
       return false
