@@ -16,6 +16,7 @@ import { triggerWaitlistOffers } from './waitlist.service'
 import { incrementLoyaltyCounter } from './loyalty.service'
 import { decrementSubscriptionService } from './subscription.service'
 import { getAppSettings } from './settings.service'
+import { sendPushToAllAdmins } from './push.service'
 
 /**
  * Helper to convert "HH:mm" string to minutes since midnight
@@ -246,6 +247,18 @@ export const createReservation = async (
       timestamp: serverTimestamp(),
     }
   await setDoc(doc(db, 'reservationEvents', eventId), event)
+
+  // Notify all admins immediately (fire-and-forget, non-fatal)
+  const dateFormatted = new Date(`${date}T${startTime}`).toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  })
+  sendPushToAllAdmins(
+    'Nouvelle réservation 📅',
+    `Réservation le ${dateFormatted} à ${startTime}`,
+    `/admin/reservations?date=${date}`,
+  ).catch(console.error)
 
   return reservation as unknown as Reservation
 }
