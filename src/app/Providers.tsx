@@ -45,13 +45,13 @@ export const Providers: React.FC<ProvidersProps> = ({ children }) => {
               <FcmBootstrap />
               <ReservationProvider>{children}</ReservationProvider>
             </NotificationProvider>
-          </SettingsProvider>
 
-          {/* Global PWA components */}
-          <OfflineBanner />
-          <IosInstallPrompt />
-          <PwaInstallBanner />
-          <UpdateBanner />
+            {/* Global PWA components */}
+            <OfflineBanner />
+            <IosInstallPrompt />
+            <PwaInstallBanner />
+            <UpdateBanner />
+          </SettingsProvider>
 
           {/* Global toast notifications */}
           <Toaster
