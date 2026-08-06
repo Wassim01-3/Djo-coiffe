@@ -16,6 +16,7 @@ interface ShopSettings {
   openingHours: OpeningHours
   reservationEnabled: boolean
   subscriptionEnabled: boolean
+  androidApkUrl: string
 }
 
 const DEFAULT_OPENING_HOURS: OpeningHours = {
@@ -40,6 +41,7 @@ const DEFAULT_SETTINGS: ShopSettings = {
   openingHours: DEFAULT_OPENING_HOURS,
   reservationEnabled: true,
   subscriptionEnabled: false,
+  androidApkUrl: '',
 }
 
 interface SettingsContextValue {
@@ -85,6 +87,7 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
           openingHours: (data.openingHours as OpeningHours) || DEFAULT_OPENING_HOURS,
           reservationEnabled: data.reservationEnabled !== false,
           subscriptionEnabled: data.subscriptionEnabled === true,
+          androidApkUrl: data.androidApkUrl || '',
         })
       }
       setIsLoading(false)
