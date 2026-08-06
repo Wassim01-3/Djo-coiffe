@@ -80,7 +80,7 @@ const SubscriptionsCatalogPage: React.FC = () => {
                 {/* Services */}
                 {(plan.servicesIncluded ?? []).length > 0 && (
                   <div className="mb-5 space-y-2.5">
-                    {plan.servicesIncluded.map((entry) => (
+                    {(plan.servicesIncluded ?? []).map((entry) => (
                       <div
                         key={entry.serviceId}
                         className="flex items-center gap-3 rounded-xl bg-white/5 px-4 py-2.5 border border-white/10"
