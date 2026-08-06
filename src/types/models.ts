@@ -27,6 +27,8 @@ export interface Admin {
   phone: string
   pin: string
   createdAt: Timestamp
+  notificationEnabled?: boolean
+  deviceTokens?: string[]
 }
 
 export interface Barber {
