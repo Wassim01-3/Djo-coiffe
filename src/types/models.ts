@@ -132,16 +132,20 @@ export interface GalleryImage {
   updatedAt: Timestamp
 }
 
+export interface SubscriptionIncludedService {
+  serviceId: string
+  count: number
+}
+
 export interface SubscriptionPlan {
   id: string
   name: string
   price: number
-  haircutsIncluded: number
   validityDays: number
   enabled: boolean
   description: string
   displayOrder: number
-  servicesIncluded?: { serviceId: string; count: number }[]
+  servicesIncluded: SubscriptionIncludedService[]
 }
 
 export type SubscriptionStatus = 'active' | 'expired' | 'finished'
@@ -150,7 +154,7 @@ export interface Subscription {
   id: string
   customerId: string
   planId: string
-  remainingHaircuts: number
+  remainingServices: Record<string, number>
   startDate: string
   expirationDate: string
   status: SubscriptionStatus
