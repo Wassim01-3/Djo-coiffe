@@ -1,0 +1,25 @@
+{
+  "id": "/admin",
+  "name": "Djo Admin",
+  "short_name": "Admin",
+  "description": "Panneau d'administration - Djo Coiffe",
+  "start_url": "/admin",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "lang": "fr",
+  "background_color": "#111827",
+  "theme_color": "#111827",
+  "categories": [
+    "business",
+    "management"
+  ],
+  "icons": [
+    {
+      "src": "/adminlogo.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    }
+  ]
+}
