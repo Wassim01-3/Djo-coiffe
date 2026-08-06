@@ -2,7 +2,6 @@ import { getToken } from 'firebase/messaging'
 import { doc, updateDoc, arrayUnion, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { db, getMessagingInstance } from '@appFirebase/config'
 import { Capacitor } from '@capacitor/core'
-import { PushNotifications } from '@capacitor/push-notifications'
 
 const NOTIFY_URL = import.meta.env.VITE_NOTIFY_SERVER_URL
 const NOTIFY_API_KEY = import.meta.env.VITE_NOTIFY_API_KEY
@@ -17,6 +16,9 @@ export const requestPushPermission = async (userId: string): Promise<boolean> =>
 
     if (isNative) {
       // --- CAPACITOR NATIVE PUSH LOGIC (ANDROID/IOS APK) ---
+      // Dynamic import so the web/Render build never needs to resolve native types
+      const { PushNotifications } = await import('@capacitor/push-notifications')
+
       let permStatus = await PushNotifications.checkPermissions()
       if (permStatus.receive === 'prompt') {
         permStatus = await PushNotifications.requestPermissions()
@@ -151,9 +153,9 @@ export const sendPushToAllUsers = async (
     const usersRef = collection(db, 'users')
     const q = query(usersRef, where('notificationEnabled', '==', true))
     const snap = await getDocs(q)
-    
+
     let allTokens: string[] = []
-    
+
     snap.forEach((docSnap) => {
       const data = docSnap.data()
       if (data.deviceTokens && Array.isArray(data.deviceTokens)) {
