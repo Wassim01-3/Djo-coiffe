@@ -23,6 +23,7 @@ import { ROUTES } from '@constants/routes'
 import { useAuthContext } from '@contexts/AuthContext'
 import { useSettingsContext } from '@contexts/SettingsContext'
 import logoFallback from '@assets/logo.png'
+import { AdminPushPrompt } from '@features/admin/AdminPushPrompt'
 
 interface NavItem {
   label: string
@@ -222,6 +223,9 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
           </footer>
         </main>
       </div>
+
+      {/* Admin push notification prompt */}
+      <AdminPushPrompt />
     </div>
   )
 }
