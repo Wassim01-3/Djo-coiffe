@@ -17,6 +17,7 @@ export const requestPushPermission = async (userId: string): Promise<boolean> =>
     if (isNative) {
       // --- CAPACITOR NATIVE PUSH LOGIC (ANDROID/IOS APK) ---
       // Dynamic import so the web/Render build never needs to resolve native types
+      // @ts-ignore
       const { PushNotifications } = await import('@capacitor/push-notifications')
 
       let permStatus = await PushNotifications.checkPermissions()
@@ -34,10 +35,10 @@ export const requestPushPermission = async (userId: string): Promise<boolean> =>
 
       // We wait for the registration event to get the token
       currentToken = await new Promise<string>((resolve, reject) => {
-        PushNotifications.addListener('registration', (token) => {
+        PushNotifications.addListener('registration', (token: any) => {
           resolve(token.value)
         })
-        PushNotifications.addListener('registrationError', (error) => {
+        PushNotifications.addListener('registrationError', (error: any) => {
           console.error('Registration error: ', error.error)
           reject(error.error)
         })
