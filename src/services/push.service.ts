@@ -9,7 +9,10 @@ const NOTIFY_API_KEY = import.meta.env.VITE_NOTIFY_API_KEY
 /**
  * Request notification permission and save the FCM token to the user's profile.
  */
-export const requestPushPermission = async (userId: string): Promise<boolean> => {
+export const requestPushPermission = async (
+  userId: string,
+  collectionName: 'users' | 'admins' = 'users',
+): Promise<boolean> => {
   try {
     const isNative = Capacitor.isNativePlatform()
     let currentToken: string | null = null
@@ -68,7 +71,7 @@ export const requestPushPermission = async (userId: string): Promise<boolean> =>
 
     if (currentToken) {
       console.log('FCM Token received (Native or Web)')
-      const userRef = doc(db, 'users', userId)
+      const userRef = doc(db, collectionName, userId)
       await updateDoc(userRef, {
         deviceTokens: arrayUnion(currentToken),
         notificationEnabled: true,
@@ -133,6 +136,59 @@ export const sendPushToUser = async (
     }
   } catch (err) {
     console.error('Failed to send push notification:', err)
+  }
+}
+
+/**
+ * Send a push notification to all admins who have notifications enabled.
+ * Called when a new reservation is created.
+ */
+export const sendPushToAllAdmins = async (
+  title: string,
+  body: string,
+  actionUrl?: string,
+): Promise<void> => {
+  if (!NOTIFY_URL || !NOTIFY_API_KEY) {
+    console.warn('VITE_NOTIFY_SERVER_URL or VITE_NOTIFY_API_KEY not configured.')
+    return
+  }
+
+  try {
+    const adminsRef = collection(db, 'admins')
+    const snap = await getDocs(adminsRef)
+
+    let allTokens: string[] = []
+
+    snap.forEach((docSnap) => {
+      const data = docSnap.data()
+      if (data.notificationEnabled && data.deviceTokens && Array.isArray(data.deviceTokens)) {
+        allTokens.push(...data.deviceTokens)
+      }
+    })
+
+    if (allTokens.length === 0) {
+      console.log('No admins with device tokens found.')
+      return
+    }
+
+    const response = await fetch(`${NOTIFY_URL}/notify`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': NOTIFY_API_KEY,
+      },
+      body: JSON.stringify({ tokens: allTokens, title, body, actionUrl }),
+    })
+
+    if (!response.ok) {
+      const err = await response.json()
+      console.error('Notify server error (admins):', err)
+    } else {
+      const result = await response.json()
+      console.log('Admin push sent:', result)
+    }
+  } catch (err) {
+    console.error('Failed to send admin push notification:', err)
   }
 }
 
