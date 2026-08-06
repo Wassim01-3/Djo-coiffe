@@ -21,7 +21,7 @@ import {
   ChevronLeft,
   ChevronRight,
 } from 'lucide-react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useSearchParams } from 'react-router-dom'
 import { ROUTES } from '@constants/routes'
 import type { Reservation, User, Barber, Service } from '@appTypes/models'
 
@@ -127,9 +127,20 @@ const fetchService = async (id: string): Promise<Service | null> => {
 // ─── Component ───────────────────────────────────────────────────────────────
 const AdminReservationsPage: React.FC = () => {
   const navigate = useNavigate()
-  
+  const [searchParams] = useSearchParams()
+
+  // Initialize date from URL query param (e.g. ?date=2026-08-15 from push notification deep-link)
+  const initialDate = (() => {
+    const param = searchParams.get('date')
+    if (param) {
+      const parsed = new Date(param)
+      if (!isNaN(parsed.getTime())) return parsed
+    }
+    return new Date()
+  })()
+
   // State for date selection
-  const [selectedDateObj, setSelectedDateObj] = useState(new Date())
+  const [selectedDateObj, setSelectedDateObj] = useState(initialDate)
   const selectedDateStr = selectedDateObj.toISOString().split('T')[0]
   
   const [cards, setCards] = useState<QueueCard[]>([])
