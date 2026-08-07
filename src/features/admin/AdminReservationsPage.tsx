@@ -145,6 +145,27 @@ const AdminReservationsPage: React.FC = () => {
   
   const [cards, setCards] = useState<QueueCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [activeHighlight, setActiveHighlight] = useState<string | null>(null)
+
+  useEffect(() => {
+    const highlightId = searchParams.get('highlight')
+    if (highlightId && !isLoading && cards.length > 0) {
+      setActiveHighlight(highlightId)
+      
+      // Small timeout to allow layout to settle before scrolling
+      setTimeout(() => {
+        const el = document.getElementById(`res-${highlightId}`)
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+      }, 300)
+
+      const timer = setTimeout(() => {
+        setActiveHighlight(null)
+      }, 5000)
+      return () => clearTimeout(timer)
+    }
+  }, [searchParams, isLoading, cards])
 
   // Navigation handlers
   const handlePrevDay = () => {
@@ -309,13 +330,20 @@ const AdminReservationsPage: React.FC = () => {
             const isCancelled =
               res.status === 'cancelled' || res.status === 'expired'
 
+            const isHighlighted = res.id === activeHighlight
+
             return (
               <motion.div
+                id={`res-${res.id}`}
                 key={res.id}
                 initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: idx * 0.04 }}
-                className={`relative overflow-hidden rounded-2xl border p-4 transition-shadow ${getCardBorder(card, selectedDateStr)}`}
+                className={`relative overflow-hidden rounded-2xl border p-4 transition-all duration-500 ${
+                  isHighlighted
+                    ? 'border-accent bg-accent/5 ring-4 ring-accent/30 scale-[1.02]'
+                    : getCardBorder(card, selectedDateStr)
+                }`}
               >
                 {/* Current indicator */}
                 {isCurrent && !isCompleted && !isCancelled && (
