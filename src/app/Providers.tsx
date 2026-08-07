@@ -7,6 +7,7 @@ import { ReservationProvider } from '@contexts/ReservationContext'
 import { NotificationProvider } from '@contexts/NotificationContext'
 import { SettingsProvider } from '@contexts/SettingsContext'
 import { useFcmPermission } from '@hooks/useFcmPermission'
+import { useNotificationNavigation } from '@hooks/useNotificationNavigation'
 
 // PWA Overlays
 import OfflineBanner from '@components/pwa/OfflineBanner'
@@ -28,6 +29,7 @@ const queryClient = new QueryClient({
 /** Runs the FCM hook inside the provider tree where both Auth & Notification contexts are available */
 const FcmBootstrap: React.FC = () => {
   useFcmPermission()
+  useNotificationNavigation()
   return null
 }
 
