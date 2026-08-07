@@ -257,7 +257,7 @@ export const createReservation = async (
   sendPushToAllAdmins(
     'Nouvelle réservation 📅',
     `Réservation le ${dateFormatted} à ${startTime}`,
-    `/admin/reservations?date=${date}`,
+    `/admin/reservations?date=${date}&highlight=${reservationId}`,
   ).catch(console.error)
 
   return reservation as unknown as Reservation
