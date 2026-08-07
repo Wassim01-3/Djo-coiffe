@@ -16,15 +16,40 @@ firebase.initializeApp(firebaseConfig)
 
 const messaging = firebase.messaging()
 
-// Optional: Background message handler
-messaging.onBackgroundMessage((payload) => {
-  console.log('[firebase-messaging-sw.js] Received background message ', payload)
-  const notificationTitle = payload.notification?.title || 'Nouvelle notification'
-  const notificationOptions = {
-    body: payload.notification?.body,
-    icon: '/logo.png',
-    data: payload.data
+// We purposely do NOT call messaging.onBackgroundMessage() and showNotification()
+// here because Firebase automatically displays a notification if the payload
+// contains a 'notification' object. Doing it manually causes duplicate notifications.
+
+// Handle click on the FCM-generated notification
+self.addEventListener('notificationclick', function(event) {
+  event.notification.close();
+  
+  // Try to extract the custom actionUrl from the data payload
+  let urlToOpen = '/';
+  
+  if (event.notification.data) {
+    if (event.notification.data.actionUrl) {
+      urlToOpen = event.notification.data.actionUrl;
+    } else if (event.notification.data.FCM_MSG && event.notification.data.FCM_MSG.data && event.notification.data.FCM_MSG.data.actionUrl) {
+      urlToOpen = event.notification.data.FCM_MSG.data.actionUrl;
+    }
   }
 
-  self.registration.showNotification(notificationTitle, notificationOptions)
-})
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
+      // Check if there is already a window/tab open with the target app
+      for (let i = 0; i < windowClients.length; i++) {
+        let client = windowClients[i];
+        // If the window is already open, just navigate it and focus
+        if (client.url && client.url.includes(self.location.origin) && 'focus' in client) {
+          client.navigate(urlToOpen);
+          return client.focus();
+        }
+      }
+      // If not, open a new window
+      if (clients.openWindow) {
+        return clients.openWindow(urlToOpen);
+      }
+    })
+  );
+});
