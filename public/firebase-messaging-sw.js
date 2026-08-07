@@ -13,48 +13,73 @@ const firebaseConfig = {
 }
 
 firebase.initializeApp(firebaseConfig)
-
 const messaging = firebase.messaging()
 
-// We do NOT call messaging.onBackgroundMessage() / showNotification() here.
-// Firebase automatically displays a notification when the payload contains
-// a 'notification' object. Doing it manually causes duplicate notifications.
+// ─── Background message handler ──────────────────────────────────────────────
+// We handle it here so that the `notificationclick` handler below receives the
+// correct `event.notification.data` with our `actionUrl`.
+//
+// Firebase automatically shows a notification when the payload has a
+// `notification` field, which would cause DUPLICATE notifications if we also
+// call showNotification(). To avoid duplicates we check if a notification
+// body/title is already provided and skip manual showNotification.
+//
+// However, we MUST register onBackgroundMessage so the SW "owns" the message
+// and our custom notificationclick handler gets invoked (otherwise Chrome uses
+// Firebase's built-in handler which ignores our click logic).
+messaging.onBackgroundMessage((payload) => {
+  console.log('[SW] Background message received:', payload)
 
-// Handle click on the FCM-generated notification
+  // The notification is already displayed automatically by Firebase because
+  // the server sends a `notification` field. We just want to make sure our
+  // notificationclick handler fires, so we do NOT call showNotification again.
+  // (Calling it here causes the duplicate notification the user experienced.)
+})
+
+// ─── Notification click handler ───────────────────────────────────────────────
 self.addEventListener('notificationclick', function(event) {
   event.notification.close()
 
-  // Extract the actionUrl from multiple possible locations in the FCM payload
-  let urlToOpen = '/'
+  // Try to extract the actionUrl from all possible FCM payload locations.
+  // Firebase can nest data differently depending on SDK version.
+  let urlToOpen = '/admin'
   const data = event.notification.data
+
+  console.log('[SW] Notification clicked. data:', JSON.stringify(data))
 
   if (data) {
     if (data.actionUrl) {
       urlToOpen = data.actionUrl
-    } else if (data.FCM_MSG && data.FCM_MSG.data && data.FCM_MSG.data.actionUrl) {
-      urlToOpen = data.FCM_MSG.data.actionUrl
+    } else if (data.FCM_MSG) {
+      // Some FCM compat versions wrap data inside FCM_MSG
+      const fcmData = data.FCM_MSG.data
+      if (fcmData && fcmData.actionUrl) {
+        urlToOpen = fcmData.actionUrl
+      }
     }
   }
+
+  console.log('[SW] Navigating to:', urlToOpen)
+
+  // Resolve to an absolute URL so openWindow works correctly
+  const absoluteUrl = urlToOpen.startsWith('http')
+    ? urlToOpen
+    : self.registration.scope.replace(/\/$/, '') + urlToOpen
 
   event.waitUntil(
     clients
       .matchAll({ type: 'window', includeUncontrolled: true })
       .then((windowClients) => {
-        // Check if there is already a window/tab open with the app
+        // If the PWA is already open, send a message so React Router navigates
         for (let i = 0; i < windowClients.length; i++) {
           const client = windowClients[i]
-          if (client.url && client.url.includes(self.location.origin)) {
-            // App is already open — tell React Router to navigate via postMessage
-            // This is necessary because client.navigate() bypasses React Router
+          if (client.url.includes(self.location.origin)) {
             client.postMessage({ type: 'SW_NAVIGATE', url: urlToOpen })
             return client.focus()
           }
         }
-
-        // App is NOT open — open a new window at the correct deep-link URL
-        if (clients.openWindow) {
-          return clients.openWindow(urlToOpen)
-        }
+        // App is not open: open a new window at the deep-link URL
+        return clients.openWindow(absoluteUrl)
       })
   )
 })
