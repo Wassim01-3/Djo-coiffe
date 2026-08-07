@@ -1,5 +1,5 @@
 import { getToken } from 'firebase/messaging'
-import { doc, updateDoc, arrayUnion, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
+import { doc, updateDoc, setDoc, arrayUnion, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { db, getMessagingInstance } from '@appFirebase/config'
 import { Capacitor } from '@capacitor/core'
 
@@ -72,10 +72,10 @@ export const requestPushPermission = async (
     if (currentToken) {
       console.log('FCM Token received (Native or Web)')
       const userRef = doc(db, collectionName, userId)
-      await updateDoc(userRef, {
+      await setDoc(userRef, {
         deviceTokens: arrayUnion(currentToken),
         notificationEnabled: true,
-      })
+      }, { merge: true })
 
       return true
     } else {
