@@ -1,5 +1,5 @@
 import { getToken } from 'firebase/messaging'
-import { doc, updateDoc, setDoc, arrayUnion, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
+import { doc, setDoc, arrayUnion, getDoc, collection, getDocs, query, where } from 'firebase/firestore'
 import { db, getMessagingInstance } from '@appFirebase/config'
 import { Capacitor } from '@capacitor/core'
 
