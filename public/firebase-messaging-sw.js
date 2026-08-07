@@ -16,40 +16,45 @@ firebase.initializeApp(firebaseConfig)
 
 const messaging = firebase.messaging()
 
-// We purposely do NOT call messaging.onBackgroundMessage() and showNotification()
-// here because Firebase automatically displays a notification if the payload
-// contains a 'notification' object. Doing it manually causes duplicate notifications.
+// We do NOT call messaging.onBackgroundMessage() / showNotification() here.
+// Firebase automatically displays a notification when the payload contains
+// a 'notification' object. Doing it manually causes duplicate notifications.
 
 // Handle click on the FCM-generated notification
 self.addEventListener('notificationclick', function(event) {
-  event.notification.close();
-  
-  // Try to extract the custom actionUrl from the data payload
-  let urlToOpen = '/';
-  
-  if (event.notification.data) {
-    if (event.notification.data.actionUrl) {
-      urlToOpen = event.notification.data.actionUrl;
-    } else if (event.notification.data.FCM_MSG && event.notification.data.FCM_MSG.data && event.notification.data.FCM_MSG.data.actionUrl) {
-      urlToOpen = event.notification.data.FCM_MSG.data.actionUrl;
+  event.notification.close()
+
+  // Extract the actionUrl from multiple possible locations in the FCM payload
+  let urlToOpen = '/'
+  const data = event.notification.data
+
+  if (data) {
+    if (data.actionUrl) {
+      urlToOpen = data.actionUrl
+    } else if (data.FCM_MSG && data.FCM_MSG.data && data.FCM_MSG.data.actionUrl) {
+      urlToOpen = data.FCM_MSG.data.actionUrl
     }
   }
 
   event.waitUntil(
-    clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windowClients) => {
-      // Check if there is already a window/tab open with the target app
-      for (let i = 0; i < windowClients.length; i++) {
-        let client = windowClients[i];
-        // If the window is already open, just navigate it and focus
-        if (client.url && client.url.includes(self.location.origin) && 'focus' in client) {
-          client.navigate(urlToOpen);
-          return client.focus();
+    clients
+      .matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if there is already a window/tab open with the app
+        for (let i = 0; i < windowClients.length; i++) {
+          const client = windowClients[i]
+          if (client.url && client.url.includes(self.location.origin)) {
+            // App is already open — tell React Router to navigate via postMessage
+            // This is necessary because client.navigate() bypasses React Router
+            client.postMessage({ type: 'SW_NAVIGATE', url: urlToOpen })
+            return client.focus()
+          }
         }
-      }
-      // If not, open a new window
-      if (clients.openWindow) {
-        return clients.openWindow(urlToOpen);
-      }
-    })
-  );
-});
+
+        // App is NOT open — open a new window at the correct deep-link URL
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen)
+        }
+      })
+  )
+})
