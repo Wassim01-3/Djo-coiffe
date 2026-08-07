@@ -6,7 +6,7 @@ import { GhostButton } from '@components/buttons/GhostButton'
 import { requestPushPermission } from '@services/push.service'
 import { useAuthContext } from '@contexts/AuthContext'
 
-const STORAGE_KEY = 'admin_hasPromptedForPush'
+const STORAGE_KEY = 'admin_hasPromptedForPush_v2'
 
 export const AdminPushPrompt: React.FC = () => {
   const { adminUser } = useAuthContext()
