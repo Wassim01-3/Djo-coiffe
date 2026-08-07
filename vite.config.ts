@@ -26,6 +26,7 @@ export default defineConfig({
         enabled: false, // Don't activate SW in dev (avoids cache confusion)
       },
       workbox: {
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5MB limit
         // Skip waiting when the SW receives SKIP_WAITING message
         skipWaiting: false,
         clientsClaim: true,
