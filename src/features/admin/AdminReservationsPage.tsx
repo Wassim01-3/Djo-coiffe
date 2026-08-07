@@ -129,20 +129,30 @@ const AdminReservationsPage: React.FC = () => {
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
 
-  // Initialize date from URL query param (e.g. ?date=2026-08-15 from push notification deep-link)
-  const initialDate = (() => {
-    const param = searchParams.get('date')
-    if (param) {
-      const parsed = new Date(param)
-      if (!isNaN(parsed.getTime())) return parsed
+  // Derive selected date from the URL's `date` param.
+  // We keep it in state so the user can still manually navigate days.
+  const dateParam = searchParams.get('date')
+  const parsedDateParam = (() => {
+    if (dateParam) {
+      const p = new Date(dateParam)
+      if (!isNaN(p.getTime())) return p
     }
-    return new Date()
+    return null
   })()
 
-  // State for date selection
-  const [selectedDateObj, setSelectedDateObj] = useState(initialDate)
+  // State for date selection — initialised from URL
+  const [selectedDateObj, setSelectedDateObj] = useState(parsedDateParam ?? new Date())
   const selectedDateStr = selectedDateObj.toISOString().split('T')[0]
-  
+
+  // Sync the date when the URL changes (e.g. push-notification deep link
+  // triggers a React Router navigate with a new ?date= param)
+  useEffect(() => {
+    if (parsedDateParam) {
+      setSelectedDateObj(parsedDateParam)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateParam])
+
   const [cards, setCards] = useState<QueueCard[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [activeHighlight, setActiveHighlight] = useState<string | null>(null)
