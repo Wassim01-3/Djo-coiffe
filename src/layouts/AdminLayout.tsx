@@ -72,7 +72,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
   const SidebarContent = () => (
     <div className="flex h-full flex-col">
       {/* Logo / Brand */}
-      <div className="flex items-center gap-3 border-b border-white/10 px-5 py-5">
+      <div className="flex items-center gap-3 border-b border-white/10 px-5 pt-[calc(env(safe-area-inset-top)+1.25rem)] pb-5">
         <img
           src={logoSrc}
           alt={shopName}
@@ -163,7 +163,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
               {/* Close Button */}
               <button
                 onClick={() => setIsDrawerOpen(false)}
-                className="absolute right-4 top-4 flex h-8 w-8 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white"
+                className="absolute right-4 top-[calc(env(safe-area-inset-top)+1rem)] flex h-8 w-8 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white"
               >
                 <X className="h-4 w-4" />
               </button>
@@ -176,7 +176,7 @@ const AdminLayout: React.FC<AdminLayoutProps> = ({ children }) => {
       {/* ─── Main Content ─── */}
       <div className="flex flex-1 flex-col md:ml-60">
         {/* Mobile Sticky Top Bar */}
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white px-4 py-3 md:hidden">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-gray-200 bg-white px-4 pt-[calc(env(safe-area-inset-top)+0.75rem)] pb-3 md:hidden">
           <button
             id="admin-menu-button"
             onClick={() => setIsDrawerOpen(true)}
