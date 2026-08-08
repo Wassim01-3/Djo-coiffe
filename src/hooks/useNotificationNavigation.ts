@@ -25,8 +25,8 @@ export const useNotificationNavigation = () => {
 
   useEffect(() => {
     // ── Strategy A: Check CacheStorage for a pending navigation ──
-    const checkPendingNavigation = async () => {
-      if (!('caches' in window)) return
+    const checkPendingNavigation = async (): Promise<boolean> => {
+      if (!('caches' in window)) return false
       try {
         const cache = await caches.open(SW_CACHE_NAME)
         const response = await cache.match(SW_PENDING_NAVIGATE_KEY)
@@ -42,13 +42,29 @@ export const useNotificationNavigation = () => {
               navigate(url, { replace: false })
             }
           }
+          return true
         }
       } catch (err) {
         console.warn('[useNotificationNavigation] CacheStorage check failed:', err)
       }
+      return false
     }
 
-    checkPendingNavigation()
+    // Because of race conditions where the UI might boot up faster than the
+    // Service Worker can write to CacheStorage on iOS, we poll a few times.
+    let attempts = 0
+    const maxAttempts = 6 // Poll 6 times (up to 3 seconds)
+    const interval = setInterval(async () => {
+      const found = await checkPendingNavigation()
+      attempts++
+      if (found || attempts >= maxAttempts) {
+        clearInterval(interval)
+      }
+    }, 500)
+    // Run immediately as well
+    checkPendingNavigation().then(found => {
+      if (found) clearInterval(interval)
+    })
 
     // ── Strategy B: Listen for real-time postMessage from SW ──
     if (!('serviceWorker' in navigator)) return
