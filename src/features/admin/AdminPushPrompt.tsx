@@ -45,6 +45,14 @@ export const AdminPushPrompt: React.FC = () => {
     }
     setIsRequesting(true)
     try {
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations()
+        for (const reg of regs) {
+          if (reg.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+            await reg.update()
+          }
+        }
+      }
       await requestPushPermission(adminUser.uid, 'admins')
     } catch (err) {
       console.error('Admin push permission error:', err)
