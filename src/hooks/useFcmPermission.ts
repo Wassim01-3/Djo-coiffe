@@ -32,6 +32,16 @@ export const useFcmPermission = () => {
 
     const requestPermission = async () => {
       try {
+        // Force update the firebase messaging service worker if it exists
+        // This ensures the client downloads the latest bug fixes.
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations()
+          for (const reg of regs) {
+            if (reg.active?.scriptURL.includes('firebase-messaging-sw.js')) {
+              await reg.update()
+            }
+          }
+        }
         await requestPushPermission(customer.id)
       } catch (err) {
         // Silently fail — notification failure must never break the app
