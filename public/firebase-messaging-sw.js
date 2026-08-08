@@ -13,34 +13,44 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig)
 const messaging = firebase.messaging()
 
-// Register onBackgroundMessage so the SW "owns" the message and our
-// custom notificationclick handler is invoked instead of Firebase's default.
-// We do NOT call showNotification() here because Firebase already shows the
-// notification automatically (the server sends a `notification` field).
-// Calling it here would cause the duplicate notification bug.
-messaging.onBackgroundMessage((_payload) => {
-  // Intentionally empty — Firebase displays the notification automatically.
+// ─── Background message handler ────────────────────────────────────────────────
+// The server now sends a "data-only" payload to Web Push (no root `notification`).
+// This bypasses Firebase's automatic notification display and click hijacking.
+// We must manually construct and show the notification here.
+messaging.onBackgroundMessage((payload) => {
+  console.log('[SW] Background message received:', payload)
+  
+  const data = payload.data || {}
+  const title = data.title || 'Djo Coiffe'
+  const body = data.body || ''
+  const actionUrl = data.actionUrl || '/admin'
+
+  const options = {
+    body,
+    icon: '/logo.png',
+    badge: '/logo.png',
+    data: { actionUrl }, // Attach our custom deep-link to the notification data
+    requireInteraction: true // Keep it open until the user clicks it
+  }
+
+  self.registration.showNotification(title, options)
 })
 
 // ─── Notification click handler ────────────────────────────────────────────────
+// Because we created the notification manually above, we have 100% control
+// over this click event, and Firebase SDK will not interfere.
 self.addEventListener('notificationclick', function(event) {
   event.notification.close()
 
-  // ── 1. Extract the deep-link URL from the FCM data payload ──
-  let urlToOpen = '/admin'
-  const data = event.notification.data
+  // 1. Extract the deep-link URL we attached when showing the notification
+  const data = event.notification.data || {}
+  const urlToOpen = data.actionUrl || '/admin'
 
-  if (data) {
-    if (data.actionUrl) {
-      urlToOpen = data.actionUrl
-    } else if (data.FCM_MSG && data.FCM_MSG.data && data.FCM_MSG.data.actionUrl) {
-      urlToOpen = data.FCM_MSG.data.actionUrl
-    }
-  }
+  console.log('[SW] Notification clicked. Navigating to:', urlToOpen)
 
   event.waitUntil(
     (async () => {
-      // ── 2. Persist the URL in CacheStorage (iOS-safe bridge) ──
+      // 2. Persist the URL in CacheStorage (iOS-safe bridge)
       // On iOS PWA the app ALWAYS reopens at start_url (/admin) when a
       // notification is tapped — it ignores any deep-link URL.
       // We therefore store the pending navigation so the app can read
@@ -52,7 +62,7 @@ self.addEventListener('notificationclick', function(event) {
         console.warn('[SW] Could not write to CacheStorage:', e)
       }
 
-      // ── 3. Handle window focus / open ──
+      // 3. Handle window focus / open
       const windowClients = await clients.matchAll({
         type: 'window',
         includeUncontrolled: true,
@@ -69,7 +79,11 @@ self.addEventListener('notificationclick', function(event) {
 
       // App is closed: open it. On iOS this always opens at start_url,
       // but the app will read the pending URL from CacheStorage on mount.
-      return clients.openWindow(self.registration.scope)
+      const absoluteUrl = urlToOpen.startsWith('http')
+        ? urlToOpen
+        : self.registration.scope.replace(/\/$/, '') + urlToOpen
+        
+      return clients.openWindow(absoluteUrl)
     })()
   )
 })
