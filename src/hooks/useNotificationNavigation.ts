@@ -61,6 +61,18 @@ export const useNotificationNavigation = () => {
         clearInterval(interval)
       }
     }, 500)
+    
+    // Also check whenever the app comes to the foreground (visibilitychange)
+    // This is crucial if the app was in the background, the push notification
+    // was tapped, and the OS brings the app to the foreground but drops the
+    // postMessage event!
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkPendingNavigation()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     // Run immediately as well
     checkPendingNavigation().then(found => {
       if (found) clearInterval(interval)
@@ -86,6 +98,7 @@ export const useNotificationNavigation = () => {
 
     navigator.serviceWorker.addEventListener('message', handleMessage)
     return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
       navigator.serviceWorker.removeEventListener('message', handleMessage)
     }
   }, [navigate])
