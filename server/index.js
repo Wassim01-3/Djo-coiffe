@@ -54,23 +54,27 @@ app.post('/notify', async (req, res) => {
     const messaging = admin.messaging()
     const message = {
       tokens,
-      notification: { title, body },
-      // Include actionUrl in the data payload so the service worker
-      // can extract it in the `notificationclick` handler.
-      // NOTE: All FCM data values must be strings.
-      data: actionUrl ? { actionUrl: String(actionUrl) } : {},
-      webpush: {
-        notification: {
-          icon: '/logo.png',
-          badge: '/logo.png',
-        },
-        // Do NOT set fcmOptions.link here — if you do, Firebase intercepts
-        // the notification click and opens the link itself, bypassing our
-        // custom notificationclick handler in firebase-messaging-sw.js.
+      // We do NOT include the root `notification` object.
+      // This forces Web Push to receive a "data-only" message, meaning
+      // Firebase Web SDK will NOT automatically show the notification and
+      // will NOT hijack the `notificationclick` event.
+      data: {
+        title: String(title),
+        body: String(body),
+        actionUrl: actionUrl ? String(actionUrl) : '/',
       },
+      // Native Android config
+      android: {
+        notification: { title, body },
+      },
+      // Native iOS (APNs) config
       apns: {
         payload: {
-          aps: { badge: 1, sound: 'default' },
+          aps: { 
+            alert: { title, body },
+            badge: 1, 
+            sound: 'default' 
+          },
         },
       },
     }
